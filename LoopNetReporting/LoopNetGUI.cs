@@ -39,7 +39,7 @@ namespace LoopNetReporting
             //worker.WorkerSupportsCancellation = true;
             //worker.WorkerReportsProgress = true;
             tBox_Username.Text = "jennifer.leblanc@colliers.com";
-            tBox_Password.Text = "leblanc2016";
+            tBox_Password.Text = "investinboise2017";
         }
         #endregion
 
