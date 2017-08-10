@@ -38,45 +38,15 @@ namespace LoopNetReporting
             //worker.ProgressChanged += worker_ProgressChanged;
             //worker.WorkerSupportsCancellation = true;
             //worker.WorkerReportsProgress = true;
-            tBox_Username.Text = "jennifer.leblanc@colliers.com";
-            tBox_Password.Text = "investinboise2017";
+            //tBox_Username.Text = "jennifer.leblanc@colliers.com";
+            tBox_Username.Text = "sheri.breed@colliers.com";
+            //tBox_Password.Text = "investinboise2017";
+            tBox_Password.Text = "morris66";
         }
         #endregion
 
         #region EventHandlers
-        //private void worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        //{
-        //    tBox_Output.Text = "Polygons parsed : " + e.ProgressPercentage.ToString() + @"%"
-        //    + Environment.NewLine + "Polygon Properties Parsed: " + ((int)e.UserState).ToString() +@"%";
-        //}
-        //private void worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        //{
-        //    tBox_Output.Text = output;
-        //    btn_Submit.Enabled = true;
-        //}
-        //private void worker_DoWork(object sender, DoWorkEventArgs e)
-        //{
-        //    try
-        //    {
-
-        //        LoopNetXPath parser = new LoopNetXPath();
-        //        parser.DoWork(tBox_Username.Text, tBox_Password.Text, worker);
-        //        output = "Parsing completed succesfully!!!";
-
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        output = "ERROR: " + Environment.NewLine + ex.Message + Environment.NewLine + "STACK TRACE:"
-        //           + Environment.NewLine + ex.StackTrace + Environment.NewLine;
-        //        if (ex.InnerException != null)
-        //        {
-        //            output += "INNER ERROR: " + Environment.NewLine + ex.InnerException.Message + Environment.NewLine + "INNER STACK TRACE:"
-        //            + Environment.NewLine + ex.InnerException.StackTrace + Environment.NewLine;
-        //        }
-        //        //tBox_Output.Text = output;
-        //    }
-            
-        //}
+        
         private void btn_Submit_Click(object sender, EventArgs e)
         {
             tBox_Output.Text = "Working...";

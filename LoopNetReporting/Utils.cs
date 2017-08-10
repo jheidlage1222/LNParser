@@ -40,10 +40,18 @@ namespace LoopNetReporting
                 return " ";
             if (value.Contains("\"") || value.Contains("'") || value.Contains("&amp;"))
                 return "FIELD UNAVAILABLE";
-            if (value != null)
-                value = value.Replace(",", string.Empty).Replace("\r\n", string.Empty).Replace(Environment.NewLine, string.Empty);//.Replace("\"", string.Empty);
-            else
-                value =  string.Empty;
+            //
+            value = value.Replace(',', ' ').Trim();
+            value = value.Replace('\r', ' ');
+            value = value.Replace('\n', ' ');
+            value = value.Replace('\f', ' ');
+            value = value.Replace('\t', ' ');
+            value = value.Replace('=', ' ');
+            //
+            //if (value != null)
+            //    value = value.Replace(",", string.Empty).Replace("\r\n", string.Empty).Replace(Environment.NewLine, string.Empty);//.Replace("\"", string.Empty);
+            //else
+            //    value =  string.Empty;
             return value;
         }
         public static bool TypesAndSubTypesLoaded = false;

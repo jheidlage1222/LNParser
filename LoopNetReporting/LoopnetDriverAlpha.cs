@@ -34,6 +34,7 @@ namespace LoopNetReporting
         private TimeSpan awaitDisplay = new TimeSpan(0, 0, 30);
         string hostName = @"http://www.loopnet.com/";
         List<Polygon> polygons = new List<Polygon>();
+        private const bool _doLogout = true;
         //private static List<string> errors = new List<string>();
         //private static List<string> info = new List<string>();
         #endregion
@@ -112,21 +113,22 @@ namespace LoopNetReporting
                 options.AddExtensions(//"libraries\\AdBIock-Plus_v2.1.crx",
                       "libraries\\Block-image_v1.1.crx", "libraries\\AdBlock.crx");
                 //options.BinaryLocation = @"C:\Users\john.heidlage\AppData\Local\Chromium\Application\chrome.exe";
-
                 driver = new ChromeDriver(options);
                 //driver = new ChromeDriver();
                 driver.Manage().Window.Maximize();
-                driver.Manage().Timeouts().SetScriptTimeout(awaitDisplay);
-                driver.Manage().Timeouts().ImplicitlyWait(awaitDisplay);
-                driver.Manage().Timeouts().SetPageLoadTimeout(awaitDisplay);
-                //driver.Manage().Window.Position = new System.Drawing.Point(0, 0);
+                driver.Manage().Timeouts().ImplicitWait = awaitDisplay;
+                driver.Manage().Timeouts().PageLoad = awaitDisplay;
+                //
                 try
                 {
                     //Incase i didnt logout or someone is using the account #thuglife
-                    driver.Navigate().GoToUrl(logoutUrl);
-                    //I was kind of hoping to avoid these but screw it, we're on the clock.
-                    //Just give it an extra second to do it's work.
-                    Thread.Sleep(1000);
+                    if (_doLogout)
+                    {
+                        driver.Navigate().GoToUrl(logoutUrl);
+                        //I was kind of hoping to avoid these but screw it, we're on the clock.
+                        //Just give it an extra second to do it's work.
+                        Thread.Sleep(1000);
+                    }
                 }
                 catch
                 {
@@ -228,23 +230,10 @@ namespace LoopNetReporting
                     //
                     if(index == 0)
                         OverlayKiller();
-                    //var addtlPagesElements = //driver.FindElementsByXPath(pageUrlElementsXPath);
-                    //    html;
-                    
-
-
-                    //currentPolygon.Urls.AddRange(addtlPagesElements.Select(x => x.Attributes["href"].ToString()).ToList());
-                    //currentPolygon.Urls.AddRange(addtlPagesElements.ToList().Select(x => x.GetAttributeValue("href", "fuck")));
-                    //int numPolygonProperties = 0;
-                    //int numPolygonProperties = 0;
-                    //int numPages = pageLinksCollection?.Count + 1 ?? 1;
+                    //
                     do
                     //for (int currentPageUrlIndex = 0; currentPageUrlIndex < currentPolygon.Urls.Count; currentPageUrlIndex++)
                     {
-                        //string currentPageUrl = currentPolygon.PageUrls[currentPageUrlIndex];
-                        //if(currentPageUrlIndex != 0)
-                        //driver.Navigate().GoToUrl(currentPolygon.Urls[currentPageUrlIndex]);
-
                         if (screenOverlay)
                         {
                             screenOverlay = false;
@@ -264,27 +253,15 @@ namespace LoopNetReporting
                             Thread.Sleep(5000);
                         }
 
-                        //
-                        //selectAllCheckBox.Clear(); selectAllCheckBox.Click();
-                        //Get whatever data you need from this page before we  go to the report
-
-                        //
-                       
-                        //
                         List<IWebElement> propertyNameParagraphs = driver.FindElements(By.CssSelector("p.property-name")).ToList();
                         List <string> propertyNamesCollection = new List<string>(propertyNameParagraphs.Count);
                         foreach (IWebElement propParElement in propertyNameParagraphs)
                         {
                             propertyNamesCollection.Add(propParElement.Text);
                         }
-                        //propertyNamesCollection.RemoveAt(0);
-                        //var propertyNamesCollection = driver.FindElementsByXPath(propertyNamesXPath2).Select(x => x.Text).ToList<string>();
-                        //
-                        //  if (currentPageUrlIndex == 0)
-                        // {
-                        driver.FindElementByXPath(createReportsBtnXPathA).Click();
-                        // }
 
+                        driver.FindElementByXPath(createReportsBtnXPathA).Click();
+                        //
                         driver.FindElementByXPath(selectAllPropertiesOnPageXPath).Click();
                         //
                         driver.FindElementByXPath(generateReportsBtnXPath).Click();
@@ -449,13 +426,6 @@ namespace LoopNetReporting
                             {
                                 moreResults = true;
                                 driver.Navigate().GoToUrl(caretLink.GetAttributeValue("href", ""));
-                                //    int idk = 0;
-                                //    var filteredPageUrls = addtlPagesElements.Where(x => int.TryParse(x.InnerText.Trim(), out idk)).ToList();
-                                //    for (int charlie = 0; charlie < filteredPageUrls.Count; charlie++)
-                                //    {
-                                //        currentPolygon.Urls.Add(filteredPageUrls[charlie].GetAttributeValue("href", "ruh roh"));
-                                //    }
-                                //}
                             }
                             else moreResults = false;
                         }
