@@ -22,8 +22,7 @@ using Newtonsoft.Json.Serialization;
 using LoopNetReportingClasses;
 using Newtonsoft.Json.Converters;
 using HtmlAgilityPack;
-
-
+using ListingFullJSON;
 
 namespace LoopNetReporting
 {
@@ -106,7 +105,7 @@ namespace LoopNetReporting
             try
             {
                 //Variables local to this method
-                int index = 0;
+                int index = -1, pageNum = 0;
                 int lastPolygonIndex = 0;
                 //int TOTAL_REPORTS_SELECTED = 0;
                 ChromeOptions options = new ChromeOptions();
@@ -170,251 +169,244 @@ namespace LoopNetReporting
                 assistDoc.LoadHtml(driver.PageSource);
                 var polyLinkElements = driver.FindElementsByXPath("/html/body/form/div[5]/div/div/table/tbody/tr/td[1]/div/a[position() = 1 and contains(@href, 'for-lease')]");
                 var polyNameElements = driver.FindElementsByXPath("/html/body/form/div[5]/div/div/table/tbody/tr/td[2]").Where(x => x.Text.ToLower().Contains("sale") == false).ToList();
-  
-                
-                    //var polyLinkElements = driver.find
-                    //var polyLinkElements = driver.FindElementsByXPath(polygonUrlsXPathA);
-                    //var polyNameElementsTemp = driver.FindElementsByXPath(polygonNamesXPathA);
-                    //var polyNameElements = polyNameElementsTemp.Where(x => x.Text.ToLower().Contains("sale") == false);
-
-                    //if (polyLinkElements.Count != polyNameElements.Count || polyLinkElements.Count == 0 || polyNameElements.Count == 0)
-                    //{
-                    //    //string exString = "There was a mismatch between the polygon links and their names" + polyLinkElements.Count
-                    //    //    + " " + polyNameElements.Count;
-                    //    string exString1 = $"There was a mismatch between retrieved polygon links {polyLinkElements.Count} "
-                    //        + $"and the retrieved names of the polygons {polyNameElements.Count}";
-                    //    throw new Exception(exString1);
-                    //}
-                    //Go through and create our basic polygon objects
-                    //
-
+                //
                 List<string> pageLinkUrls = new List<string>();
 
                 for (int polyCreateIndex = 0; polyCreateIndex < polyLinkElements.Count; polyCreateIndex++)
                 {
-                    ////
-                    ////if (polyNameElements[polyCreateIndex].Text.ToLower().Contains("for sale"))
-                    ////    continue;
-                    ////
-                    //var linkElement = polyLinkElements[polyCreateIndex];
-                    ////TODO: Set this up right.
-                    ////var nameElement = linkElement.FindElement(By.XPath("/././tr/td"));
-                    //var nameElement = linkElement.FindElement(By.XPath("./.."));
-                    ////
-
-                    //assistDoc.DocumentNode.ParentNode;
+                    //
                     string polyName = "Polygon Search Num: " + polyCreateIndex;
                     string tempName = polyNameElements[polyCreateIndex].Text;
                     string polyMainUrl = polyLinkElements[polyCreateIndex].GetAttribute("href");
-                    //var polyLinkElement = pageLinkUrls[polyCreateIndex];
-                    var newPolygon = new Polygon(polyMainUrl, tempName, -1);
-                        //polyNameElements[polyCreateIndex].Text, polyLinkElements[polyCreateIndex]);
                     //
+                    var newPolygon = new Polygon(polyMainUrl, tempName, -1);
                     polygons.Add(newPolygon);
                 }
-                
-                //
-                bool initSplash = true;
-                //List<string> pageUrlElements = new List<string>();
-                //string pageUrlElementsXPath = "/html/body/section/main/section/div/section[2]/section[2]/div[2]/ol/li[3]/a";
-                //var addtlPages = driver.FindElementsByXPath(pageUrlElementsXPath).ToList();
-                //int indexHolder = 0;
-                for (index = 0; index < polygons.Count; index++)
+                foreach (var currentPolygon in polygons)
                 {
-                    System.Diagnostics.Debug.Print("Polygon " + index.ToString() + " " + DateTime.Now.ToShortTimeString());
-                    bool moreResults = true, screenOverlay = true;
-                    //indexHolder = index;
-                    var currentPolygon = polygons[index];
+                    index++;
                     currentPolygon.StartedProcessing = true;
                     driver.Navigate().GoToUrl(currentPolygon.Urls[0]);
-                    //
-                    if(index == 0)
-                        OverlayKiller();
-                    //
-                    do
-                    //for (int currentPageUrlIndex = 0; currentPageUrlIndex < currentPolygon.Urls.Count; currentPageUrlIndex++)
+                    if (index == 0)
                     {
-                        if (screenOverlay)
-                        {
-                            screenOverlay = false;
-                            //Utils.LoadTypesAndSubTypes(driver);
-                            //Gets rid of that stupid overlay.
-
-                            //Hits the create report button so we can select properties
-                            //
-                            driver.FindElementByXPath(propertyTypesDropDownBtnXPath).Click();
-                            //
-                            var selectAllPropTypesCheckBox = driver.FindElementByXPath(selectAllCheckBoxXPath);
-                            if (selectAllPropTypesCheckBox.Selected == false)
-                                selectAllPropTypesCheckBox.Click();
-                            //
-                            //string loopnetSubMarketsXPath = "/html/body/section/main/section/div/section[1]/div/div/div[2]/div[1]/div[1]/div/ul/li/label[1]";
-                            driver.FindElementByXPath(propertyTypesDropDownBtnXPath).Click();
-                            Thread.Sleep(5000);
-                        }
-
+                        OverlayKiller();
+                        //
+                        driver.FindElementByXPath(propertyTypesDropDownBtnXPath).Click();
+                        //
+                        var selectAllPropTypesCheckBox = driver.FindElementByXPath(selectAllCheckBoxXPath);
+                        if (selectAllPropTypesCheckBox.Selected == false)
+                            selectAllPropTypesCheckBox.Click();
+                        //
+                        //string loopnetSubMarketsXPath = "/html/body/section/main/section/div/section[1]/div/div/div[2]/div[1]/div[1]/div/ul/li/label[1]";
+                        driver.FindElementByXPath(propertyTypesDropDownBtnXPath).Click();
+                        Thread.Sleep(5000);
+                    }
+                    //
+                    bool initSplash = true;
+                    bool moreResults = true;
+                    while (moreResults)
+                    {
+                        pageNum++;
+                        //bool screenOverlay = true;
                         List<IWebElement> propertyNameParagraphs = driver.FindElements(By.CssSelector("p.property-name")).ToList();
-                        List <string> propertyNamesCollection = new List<string>(propertyNameParagraphs.Count);
+                        List<string> propertyNamesCollection = new List<string>(propertyNameParagraphs.Count);
                         foreach (IWebElement propParElement in propertyNameParagraphs)
                         {
                             propertyNamesCollection.Add(propParElement.Text);
                         }
-
-                        driver.FindElementByXPath(createReportsBtnXPathA).Click();
                         //
-                        driver.FindElementByXPath(selectAllPropertiesOnPageXPath).Click();
-                        //
-                        driver.FindElementByXPath(generateReportsBtnXPath).Click();
-                        //
-                        driver.FindElementById("flListingSummary").Click();
-                        //
-                        driver.FindElementById("btnCreateReport1").Click();
-                        //
-                        //ChromeWebElement reportFrame = (ChromeWebElement)driver.FindElementById("reportFrame");
-                        ///html/body/script[2]
-                        try
+                        for (int resultPageRunCounter = 0; resultPageRunCounter < 2; resultPageRunCounter++)
+                        //for (int currentPageUrlIndex = 0; currentPageUrlIndex < currentPolygon.Urls.Count; currentPageUrlIndex++)
                         {
-                            driver.SwitchTo().Frame(0);
-                            //
-                            #region Format Json String
-                            string jsonRaw = driver.PageSource;
-                            jsonRaw = jsonRaw.Substring(jsonRaw.IndexOf(@"<script>Report={"));
-                            //
-                            //Subtract one because of the quote.  There is also one after.
-                            string configEnd = "Config=";
-                            int startIndex = jsonRaw.IndexOf("\"ListingList\":");
-                            jsonRaw = jsonRaw.Substring(startIndex);
-                            jsonRaw = jsonRaw.Remove(jsonRaw.LastIndexOf(configEnd));
-                            //
-                            jsonRaw = " { " + jsonRaw;
-                            jsonRaw = jsonRaw.TrimEnd();
-                            jsonRaw = jsonRaw.Remove(jsonRaw.Length - 1, 1);
-                            jsonRaw = jsonRaw.Remove(jsonRaw.Length - 1, 1);
-                            //
-                            #endregion Json String Formatted
-                            //
-                            //Get an object from the JSON string.
-                            ListingListRoot jsonRootObject = Newtonsoft.Json.JsonConvert.DeserializeObject<ListingListRoot>(jsonRaw);
-                            
-                            //
-                            //currentPolygon.Properties = ew List<LoopNetReportingClasses.Property>();
-                            //LoopNetReportingClasses props = currentPolygon.Properties;
-                            //Need to populate the properties.
-                            //
-                            var listingList = jsonRootObject?.ListingList;
-                            //
-                            //Iterating through the number of properties
-                            for (int jsonIndex = 0; jsonIndex < listingList.Length; jsonIndex++)
-                            {
-                                //variables starting with x are program built variables, not json data
-                                //Property xProperty = currentPolygon
-                                Property xProperty = new Property();
-                                currentPolygon.Properties.Add(xProperty);
-                                var jsonListing = listingList[jsonIndex];
-                                //
-                                xProperty.PropertyType = currentPolygon.Name;
-                                xProperty.PropertyName = propertyNamesCollection[jsonIndex];
-                                //This needs to be pulled from the dictionary.
-                                xProperty.SubMarket = currentPolygon.Name;
-                                xProperty.Description = jsonListing.PropertyDescription;
-                                xProperty.LoopnetID = Convert.ToString(jsonListing.Id);
-                                xProperty.Url = jsonListing.Uri;
-                                //
-                                var jsonAddressInfo = jsonListing.Address;
-                                xProperty.State = jsonListing.Address.StateProvName;
-                                xProperty.StateId = jsonListing.Address.StateProvCode;
-                                xProperty.City = jsonListing.Address.CityName;
-                                xProperty.ZipCode = jsonListing.Address.PostalCode;
-                                xProperty.Address = jsonListing.Address.StreetAddress;
-                                //
-                                xProperty.Latitude = Convert.ToString(jsonListing.Address?.Geopoint?.Latitude);
-                                xProperty.Longitude = Convert.ToString(jsonListing.Address?.Geopoint?.Longitude);
-                                //
-                                xProperty.Status = jsonListing.Status;
-                                xProperty.Description = jsonListing.PropertyDescription;
-                                Detail[] details = jsonListing?.Details;
-                                //
-                                if (jsonListing.Broker != null)
-                                {
-                                    xProperty.Broker = new BrokerClass(jsonListing.Broker?.Name, jsonListing.Broker?.Email,
-                                        jsonListing.Broker?.CompanyName, jsonListing.Broker?.Phone);
-                                }
-                                //
-                                for (int detailIndex = 0; detailIndex < details.Length; detailIndex++)
-                                {
-                                    var currPropertyCollection = details[detailIndex];
-                                    string propertyDetailValue = currPropertyCollection.Value?[0];
-                                    //
-                                    switch (currPropertyCollection.Name.Trim().ToLower())
-                                    {
-                                        //TODO: Be fucking careful.  There are objeccts in here where the values are in a one dimensional array.
+                            System.Diagnostics.Debug.Print("Polygon " + (index + " of " + polygons.Count) + ". Page: "+ pageNum + ". Half: " + resultPageRunCounter + ". " + DateTime.Now.ToShortTimeString());
+                            //if (screenOverlay)
+                            //{
+                            //    screenOverlay = false;
+                            //    //Utils.LoadTypesAndSubTypes(driver);
+                            //    //Gets rid of that stupid overlay.
 
-                                        case "space available":
-                                            xProperty.AvailableSF = propertyDetailValue;
-                                            break;
-                                        case "building size":
-                                            xProperty.BuildingSF = propertyDetailValue;
-                                            break;
-                                        case "spaces":
-                                            xProperty.spaces = Convert.ToInt32(propertyDetailValue);
-                                            break;
-                                        case "property sub-type":
-                                            //You're gonna have to pick this up on another run.  This will slow the fuck out of everything
-                                            //TODO: Sort out this cluster fuck
-                                            xProperty.PropertySubType = propertyDetailValue;
-                                            //xProperty.PropertyType = Utils.GetPropType(propertyDetailValue);
-                                            break;
-                                        default:
-                                            //Utils.errors.Add("Detail came through that was unexpected: " + propertyDetailObject.Value[0]);
-                                            Utils.SetErrorInfo($"UNHANDLED DETAIL: {propertyDetailValue}");
-                                            break;
+                            //    //Hits the create report button so we can select properties
+                            //    //
+                            //    driver.FindElementByXPath(propertyTypesDropDownBtnXPath).Click();
+                            //    //
+                            //    var selectAllPropTypesCheckBox = driver.FindElementByXPath(selectAllCheckBoxXPath);
+                            //    if (selectAllPropTypesCheckBox.Selected == false)
+                            //        selectAllPropTypesCheckBox.Click();
+                            //    //
+                            //    //string loopnetSubMarketsXPath = "/html/body/section/main/section/div/section[1]/div/div/div[2]/div[1]/div[1]/div/ul/li/label[1]";
+                            //    driver.FindElementByXPath(propertyTypesDropDownBtnXPath).Click();
+                            //    Thread.Sleep(5000);
+                            //}
+
+                           
+
+                            driver.FindElementByXPath(createReportsBtnXPathA).Click();
+                            if (resultPageRunCounter == 1)
+                            {
+                                if (driver.FindElements(By.ClassName("check-mark")).Count < 11)
+                                    break;
+                            }
+                            //
+                            //driver.FindElementByXPath(selectAllPropertiesOnPageXPath).Click();
+                            driver.ExecuteScript(@"var checkMarkSpans = document.getElementsByClassName('check - mark');
+                            for(var index = arguments[0];index<checkMarkSpans.length && index < arguments[0] + 10;index++) checkMarkSpans[index].click();
+                        ", resultPageRunCounter == 0 ? 0 : 10);
+
+                            //
+                            driver.FindElementByXPath(generateReportsBtnXPath).Click();
+                            //
+                            driver.FindElementById("flListingSummary").Click();
+                            //
+                            driver.FindElementById("btnCreateReport1").Click();
+                            //
+                            //ChromeWebElement reportFrame = (ChromeWebElement)driver.FindElementById("reportFrame");
+                            ///html/body/script[2]
+                            try
+                            {
+                                driver.SwitchTo().Frame(0);
+                                //
+                                #region Format Json String
+                                string jsonRaw = driver.PageSource;
+                                jsonRaw = jsonRaw.Substring(jsonRaw.IndexOf(@"<script>Report={"));
+                                //
+                                //Subtract one because of the quote.  There is also one after.
+                                string configEnd = "Config=";
+                                int startIndex = jsonRaw.IndexOf("\"ListingList\":");
+                                jsonRaw = jsonRaw.Substring(startIndex);
+                                jsonRaw = jsonRaw.Remove(jsonRaw.LastIndexOf(configEnd));
+                                //
+                                jsonRaw = " { " + jsonRaw;
+                                jsonRaw = jsonRaw.TrimEnd();
+                                jsonRaw = jsonRaw.Remove(jsonRaw.Length - 1, 1);
+                                jsonRaw = jsonRaw.Remove(jsonRaw.Length - 1, 1);
+                                //
+                                #endregion Json String Formatted
+                                //
+                                //Get an object from the JSON string.
+                                Rootobject jsonRootObject = Newtonsoft.Json.JsonConvert.DeserializeObject<Rootobject>(jsonRaw);
+
+                                //
+                                //currentPolygon.Properties = ew List<LoopNetReportingClasses.Property>();
+                                //LoopNetReportingClasses props = currentPolygon.Properties;
+                                //Need to populate the properties.
+                                //
+                                var listingList = jsonRootObject?.ListingList;
+                                //
+                                //Iterating through the number of properties
+                                for (int jsonIndex = 0; jsonIndex < listingList.Length; jsonIndex++)
+                                {
+                                    //variables starting with x are program built variables, not json data
+                                    //Property xProperty = currentPolygon
+                                    Property xProperty = new Property();
+                                    currentPolygon.Properties.Add(xProperty);
+                                    var jsonListing = listingList[jsonIndex];
+                                    //
+                                    xProperty.PropertyType = currentPolygon.Name;
+                                    xProperty.PropertyName = propertyNamesCollection[jsonIndex];
+                                    //This needs to be pulled from the dictionary.
+                                    xProperty.SubMarket = currentPolygon.Name;
+                                    xProperty.Description = jsonListing.PropertyDescription;
+                                    xProperty.LoopnetID = Convert.ToString(jsonListing.Id);
+                                    xProperty.Url = jsonListing.Uri;
+                                    //
+                                    var jsonAddressInfo = jsonListing.Address;
+                                    xProperty.State = jsonListing.Address.StateProvName;
+                                    xProperty.StateId = jsonListing.Address.StateProvCode;
+                                    xProperty.City = jsonListing.Address.CityName;
+                                    xProperty.ZipCode = jsonListing.Address.PostalCode;
+                                    xProperty.Address = jsonListing.Address.StreetAddress;
+                                    //
+                                    xProperty.Latitude = Convert.ToString(jsonListing.Address?.Geopoint?.Latitude);
+                                    xProperty.Longitude = Convert.ToString(jsonListing.Address?.Geopoint?.Longitude);
+                                    //
+                                    //xProperty.Status = jsonListing.Status;
+                                    xProperty.Description = jsonListing.PropertyDescription;
+                                    ListingFullJSON.Detail[] details = jsonListing?.Details;
+                                    //
+                                    if (jsonListing.Broker != null)
+                                    {
+                                        xProperty.Broker = new BrokerClass(jsonListing.Broker?.Name, jsonListing.Broker?.Email,
+                                            jsonListing.Broker?.CompanyName, jsonListing.Broker?.Phone);
+                                    }
+                                    //
+                                    for (int detailIndex = 0; detailIndex < details.Length; detailIndex++)
+                                    {
+                                        var currPropertyCollection = details[detailIndex];
+                                        string propertyDetailValue = currPropertyCollection.Value?[0];
+                                        //
+                                        switch (currPropertyCollection.Name.Trim().ToLower())
+                                        {
+                                            //TODO: Be fucking careful.  There are objeccts in here where the values are in a one dimensional array.
+
+                                            case "space available":
+                                                xProperty.AvailableSF = propertyDetailValue;
+                                                break;
+                                            case "building size":
+                                                xProperty.BuildingSF = propertyDetailValue;
+                                                break;
+                                            case "spaces":
+                                                xProperty.spaces = Convert.ToInt32(propertyDetailValue);
+                                                break;
+                                            case "property sub-type":
+                                                //You're gonna have to pick this up on another run.  This will slow the fuck out of everything
+                                                //TODO: Sort out this cluster fuck
+                                                xProperty.PropertySubType = propertyDetailValue;
+                                                //xProperty.PropertyType = Utils.GetPropType(propertyDetailValue);
+                                                break;
+                                            default:
+                                                //Utils.errors.Add("Detail came through that was unexpected: " + propertyDetailObject.Value[0]);
+                                                Utils.SetErrorInfo($"UNHANDLED DETAIL: {propertyDetailValue}");
+                                                break;
+                                        }
+                                    }
+                                    int numLeases = jsonListing?.Lease?.Spaces?.Length ?? 0;
+                                    xProperty.leases = new List<LoopNetReportingClasses.Lease>(numLeases);
+                                    var jsonLeaseCollection = jsonListing?.Lease?.Spaces ?? new ListingFullJSON.Space[0];
+                                    //This is the singular object for all the spaces and the type of them.
+                                    for (int leaseIndex = 0; leaseIndex < numLeases; leaseIndex++)
+                                    {
+                                        var jsonLease = jsonLeaseCollection?[leaseIndex];
+                                        var xLease = new LoopNetReportingClasses.Lease();
+                                        xProperty.leases.Add(xLease);
+                                        //
+                                        //DONT BE CONFUSED.  THE LEASE MONIKER IN THE JSON POINTS TO
+                                        //A STRUCT NOT A LIST.  IT'S GOT THE TYPE AND THEN THE LIST.
+                                        //var propertyLeaseContainer = jsonLease.
+                                        //var propertyLeases = propertyLeaseContainer.Spaces;
+                                        xLease.LeaseType = jsonLease.LeaseType;
+                                        xLease.Suite = jsonLease?.Number;
+                                        xLease.AvailableSF = jsonLease?.SpaceAvailable;
+                                        xLease.AskingRateMonthly = jsonLease?.RentalRateMo;
+                                        xLease.AskingRate = jsonLease?.RentalRate;
+                                        //xLease.AskingRateType = jsonLease.t
+                                        //Minimum divisible
+                                        //Maximum continguous
+                                        xLease.Description = jsonLease?.Description;
+                                        xLease.DateAvailable = jsonLease?.DateAvailable;
                                     }
                                 }
-                                int numLeases = jsonListing?.Lease?.Spaces?.Length ?? 0;
-                                xProperty.leases = new List<LoopNetReportingClasses.Lease>(numLeases);
-                                var jsonLeaseCollection = jsonListing?.Lease?.Spaces ?? new Space[0];
-                                //This is the singular object for all the spaces and the type of them.
-                                for (int leaseIndex = 0; leaseIndex < numLeases; leaseIndex++)
-                                {
-                                    var jsonLease = jsonLeaseCollection?[leaseIndex];
-                                    var xLease = new LoopNetReportingClasses.Lease();
-                                    xProperty.leases.Add(xLease);
-                                    //
-                                    //DONT BE CONFUSED.  THE LEASE MONIKER IN THE JSON POINTS TO
-                                    //A STRUCT NOT A LIST.  IT'S GOT THE TYPE AND THEN THE LIST.
-                                    //var propertyLeaseContainer = jsonLease.
-                                    //var propertyLeases = propertyLeaseContainer.Spaces;
-                                    xLease.LeaseType = jsonLease.LeaseType;
-                                    xLease.Suite = jsonLease?.Number;
-                                    xLease.AvailableSF = jsonLease?.SpaceAvailable;
-                                    xLease.AskingRateMonthly = jsonLease?.RentalRateMo;
-                                    xLease.AskingRate = jsonLease?.RentalRate;
-                                    //xLease.AskingRateType = jsonLease.t
-                                    //Minimum divisible
-                                    //Maximum continguous
-                                    xLease.Description = jsonLease?.Description;
-                                    xLease.DateAvailable = jsonLease?.DateAvailable;
-                                }
+
+                                //string linkToGetBackXPath = "id('hlBackTo')";
+                                //driver.SwitchTo().ParentFrame();
+                                currentPolygon.EndedProcessing = true;
+                                //driver.FindElementByXPath(linkToGetBackXPath).Click();
+                                //Thread.Sleep(2000);
+                                //Add other data
+                                //driver.FindElementByXPath(linkToGetBackXPath).Click();
+
+                                //index = indexHolder;
                             }
-
-                            //string linkToGetBackXPath = "id('hlBackTo')";
-                            //driver.SwitchTo().ParentFrame();
-                            currentPolygon.EndedProcessing = true;
-                            //driver.FindElementByXPath(linkToGetBackXPath).Click();
-                            //Thread.Sleep(2000);
-                            //Add other data
-                            //driver.FindElementByXPath(linkToGetBackXPath).Click();
-
-                            //index = indexHolder;
-                        }
-                        catch {
-                        };
-                        driver.SwitchTo().ParentFrame();
-                        //
-                        driver.FindElementById("hlBackTo").Click();
-                        //
-                        driver.FindElementById("lnkBackTo").Click();
-                        //
+                            catch
+                            {
+                                System.Diagnostics.Debug.WriteLine("Error parsing JSON....");
+                            };
+                            driver.SwitchTo().ParentFrame();
+                            //
+                            driver.FindElementById("hlBackTo").Click();
+                            //
+                            driver.FindElementById("lnkBackTo").Click();
+                        } //while (moreResults);
+                          //Check for more pages.
                         HtmlDocument hDoc = new HtmlDocument();
                         hDoc.LoadHtml(driver.PageSource);
                         //var placNode = hDoc.GetElementbyId("placardSec").ChildNodes.Where(x => ()=
@@ -433,31 +425,27 @@ namespace LoopNetReporting
                         {
                             moreResults = false;
                         }
-                        
+                        //string frameSource = frameElement.Text;
+                        //driver.SwitchTo().Frame("reportFrame");
                         //
-                        //PrintData();
-                    } while (moreResults);
-                        
-                    //string frameSource = frameElement.Text;
-                    //driver.SwitchTo().Frame("reportFrame");
-                    //
 
-                    ///html/body/table/tbody/tr[55]/td[2]/span
-                    //
-                    //var leaseCollection = driver.findele
+                        ///html/body/table/tbody/tr[55]/td[2]/span
+                        //
+                        //var leaseCollection = driver.findele
 
 
 
-                    //This should work but has a pretty solid chance of breaking somewhere along the line.  
-                    // numPolygonProperties = GetTotalPolygonProperties(numListingsFromMapXPath);
+                        //This should work but has a pretty solid chance of breaking somewhere along the line.  
+                        // numPolygonProperties = GetTotalPolygonProperties(numListingsFromMapXPath);
 
 
-                    //string urlOfPropData = @"http://reporting.loopnet.com/Report/Edit/829121a2-7d43-4eeb-8e3c-47d826ee3e3b";
-                    //string anotherUrl = @"http://reporting.loopnet.com/Report/Edit/b7c56218-a7a9-41f0-932b-5472a007f0a9";
-                    //logout if neccesary
-                    //driver.Navigate().GoToUrl(@"http://www.loopnet.com/xNet/MainSite/User/logoff.aspx?LinkCode=850");
-                    //
-                    //currentPolygon.EndedProcessing = true;
+                        //string urlOfPropData = @"http://reporting.loopnet.com/Report/Edit/829121a2-7d43-4eeb-8e3c-47d826ee3e3b";
+                        //string anotherUrl = @"http://reporting.loopnet.com/Report/Edit/b7c56218-a7a9-41f0-932b-5472a007f0a9";
+                        //logout if neccesary
+                        //driver.Navigate().GoToUrl(@"http://www.loopnet.com/xNet/MainSite/User/logoff.aspx?LinkCode=850");
+                        //
+                        //currentPolygon.EndedProcessing = true;
+                    }
                 }
                 try
                 {
