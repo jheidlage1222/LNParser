@@ -219,27 +219,7 @@ namespace LoopNetReporting
                         //for (int currentPageUrlIndex = 0; currentPageUrlIndex < currentPolygon.Urls.Count; currentPageUrlIndex++)
                         {
                             System.Diagnostics.Debug.Print("Polygon " + (index + " of " + polygons.Count) + ". Page: "+ pageNum + ". Half: " + resultPageRunCounter + ". " + DateTime.Now.ToShortTimeString());
-                            //if (screenOverlay)
-                            //{
-                            //    screenOverlay = false;
-                            //    //Utils.LoadTypesAndSubTypes(driver);
-                            //    //Gets rid of that stupid overlay.
-
-                            //    //Hits the create report button so we can select properties
-                            //    //
-                            //    driver.FindElementByXPath(propertyTypesDropDownBtnXPath).Click();
-                            //    //
-                            //    var selectAllPropTypesCheckBox = driver.FindElementByXPath(selectAllCheckBoxXPath);
-                            //    if (selectAllPropTypesCheckBox.Selected == false)
-                            //        selectAllPropTypesCheckBox.Click();
-                            //    //
-                            //    //string loopnetSubMarketsXPath = "/html/body/section/main/section/div/section[1]/div/div/div[2]/div[1]/div[1]/div/ul/li/label[1]";
-                            //    driver.FindElementByXPath(propertyTypesDropDownBtnXPath).Click();
-                            //    Thread.Sleep(5000);
-                            //}
-
-                           
-
+                            //
                             driver.FindElementByXPath(createReportsBtnXPathA).Click();
                             if (resultPageRunCounter == 1)
                             {
@@ -248,14 +228,15 @@ namespace LoopNetReporting
                             }
                             //
                             //driver.FindElementByXPath(selectAllPropertiesOnPageXPath).Click();
-                            driver.ExecuteScript(@"var checkMarkSpans = document.getElementsByClassName('check - mark');
+                            driver.ExecuteScript(@"var checkMarkSpans = document.getElementsByClassName('check-mark');
                             for(var index = arguments[0];index<checkMarkSpans.length && index < arguments[0] + 10;index++) checkMarkSpans[index].click();
                         ", resultPageRunCounter == 0 ? 0 : 10);
-
+                            //driver.ExecuteScript("alert(arguments[0]);", 15);
                             //
                             driver.FindElementByXPath(generateReportsBtnXPath).Click();
                             //
-                            driver.FindElementById("flListingSummary").Click();
+                            //driver.FindElementById("flListingSummary").Click();
+                            driver.FindElementById("flListingFull").Click();
                             //
                             driver.FindElementById("btnCreateReport1").Click();
                             //
@@ -301,8 +282,8 @@ namespace LoopNetReporting
                                     currentPolygon.Properties.Add(xProperty);
                                     var jsonListing = listingList[jsonIndex];
                                     //
-                                    xProperty.PropertyType = currentPolygon.Name;
-                                    xProperty.PropertyName = propertyNamesCollection[jsonIndex];
+                                    //xProperty.PropertyType = currentPolygon.Name;
+                                    xProperty.PropertyName = propertyNamesCollection[resultPageRunCounter == 1 ? jsonIndex + 10 : jsonIndex];
                                     //This needs to be pulled from the dictionary.
                                     xProperty.SubMarket = currentPolygon.Name;
                                     xProperty.Description = jsonListing.PropertyDescription;
@@ -320,8 +301,8 @@ namespace LoopNetReporting
                                     xProperty.Longitude = Convert.ToString(jsonListing.Address?.Geopoint?.Longitude);
                                     //
                                     //xProperty.Status = jsonListing.Status;
-                                    xProperty.Description = jsonListing.PropertyDescription;
-                                    ListingFullJSON.Detail[] details = jsonListing?.Details;
+                                    //xProperty.Description = jsonListing.PropertyDescription;
+                                   
                                     //
                                     if (jsonListing.Broker != null)
                                     {
@@ -329,6 +310,7 @@ namespace LoopNetReporting
                                             jsonListing.Broker?.CompanyName, jsonListing.Broker?.Phone);
                                     }
                                     //
+                                    ListingFullJSON.Detail[] details = jsonListing?.Details;
                                     for (int detailIndex = 0; detailIndex < details.Length; detailIndex++)
                                     {
                                         var currPropertyCollection = details[detailIndex];
@@ -337,9 +319,10 @@ namespace LoopNetReporting
                                         switch (currPropertyCollection.Name.Trim().ToLower())
                                         {
                                             //TODO: Be fucking careful.  There are objeccts in here where the values are in a one dimensional array.
-
+                                            case "total space available":
                                             case "space available":
-                                                xProperty.AvailableSF = propertyDetailValue;
+                                                if(xProperty.AvailableSF == string.Empty)
+                                                    xProperty.AvailableSF = propertyDetailValue;
                                                 break;
                                             case "building size":
                                                 xProperty.BuildingSF = propertyDetailValue;
@@ -348,10 +331,45 @@ namespace LoopNetReporting
                                                 xProperty.spaces = Convert.ToInt32(propertyDetailValue);
                                                 break;
                                             case "property sub-type":
-                                                //You're gonna have to pick this up on another run.  This will slow the fuck out of everything
                                                 //TODO: Sort out this cluster fuck
                                                 xProperty.PropertySubType = propertyDetailValue;
                                                 //xProperty.PropertyType = Utils.GetPropType(propertyDetailValue);
+                                                break;
+                                            case "property type":
+                                                //TODO: Sort out this cluster fuck
+                                                xProperty.PropertyType = propertyDetailValue;
+                                                //xProperty.PropertyType = Utils.GetPropType(propertyDetailValue);
+                                                break;
+                                            case "additional sub-types":
+                                                //TODO: Sort out this cluster fuck
+                                                xProperty.AddtlSubTypes.AddRange(currPropertyCollection.Value);
+                                                //xProperty.PropertyType = Utils.GetPropType(propertyDetailValue);
+                                                break;
+                                            case "building class":
+                                                //TODO: Sort out this cluster fuck
+                                                xProperty.BuildingClass = propertyDetailValue;
+                                                //xProperty.PropertyType = Utils.GetPropType(propertyDetailValue);
+                                                break;
+                                            case "year built":
+                                                //TODO: Sort out this cluster fuck
+                                                xProperty.YearBuilt = Convert.ToInt32(propertyDetailValue);
+                                                //xProperty.PropertyType = Utils.GetPropType(propertyDetailValue);
+                                                break;
+                                            case "zoning description":
+                                                //TODO: Sort out this cluster fuck
+                                                xProperty.ZoningDescription = propertyDetailValue;
+                                                //xProperty.PropertyType = Utils.GetPropType(propertyDetailValue);
+                                                break;
+                                            case "status":
+                                                //TODO: Sort out this cluster fuck
+                                                xProperty.Status = propertyDetailValue;
+                                                //xProperty.PropertyType = Utils.GetPropType(propertyDetailValue);
+                                                break;
+                                            case "min. divisible":
+                                                xProperty.MinDivisibleSF = propertyDetailValue;
+                                                break;
+                                            case "max. contiguous":
+                                                xProperty.MaxContiguousSF = propertyDetailValue;
                                                 break;
                                             default:
                                                 //Utils.errors.Add("Detail came through that was unexpected: " + propertyDetailObject.Value[0]);
@@ -360,14 +378,14 @@ namespace LoopNetReporting
                                         }
                                     }
                                     int numLeases = jsonListing?.Lease?.Spaces?.Length ?? 0;
-                                    xProperty.leases = new List<LoopNetReportingClasses.Lease>(numLeases);
+                                    xProperty.Leases = new List<LoopNetReportingClasses.Lease>(numLeases);
                                     var jsonLeaseCollection = jsonListing?.Lease?.Spaces ?? new ListingFullJSON.Space[0];
                                     //This is the singular object for all the spaces and the type of them.
                                     for (int leaseIndex = 0; leaseIndex < numLeases; leaseIndex++)
                                     {
                                         var jsonLease = jsonLeaseCollection?[leaseIndex];
                                         var xLease = new LoopNetReportingClasses.Lease();
-                                        xProperty.leases.Add(xLease);
+                                        xProperty.Leases.Add(xLease);
                                         //
                                         //DONT BE CONFUSED.  THE LEASE MONIKER IN THE JSON POINTS TO
                                         //A STRUCT NOT A LIST.  IT'S GOT THE TYPE AND THEN THE LIST.

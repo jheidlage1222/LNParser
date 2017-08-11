@@ -13,7 +13,7 @@ namespace LoopNetReportingClasses
         {
 
         }
-        private string delim = ",";
+        private const string delim = ",";
 
         /// <summary>
         /// CRITICAL. Just name of polygon though.
@@ -66,14 +66,16 @@ namespace LoopNetReportingClasses
         public string BuildingClass = "";
         //public string ListingBroker = "";
         public string LoopnetID = "";
-        public List<Lease> leases = new List<Lease>();
+        public List<Lease> Leases = new List<Lease>();
         //public string PolygonName = "";
         public string Url = "";
         //New
-        
-
-        
-        
+        public List<string> AddtlSubTypes = new List<string>();
+        public int YearBuilt = 2099;
+        public string ZoningDescription = "";
+        public string MinDivisibleSF = "";
+        public string MaxContiguousSF = "";
+        //End New
         public int spaces = 0;
         public string AvailableSF = "";
         public string Status = "";
@@ -86,13 +88,16 @@ namespace LoopNetReportingClasses
             //string delim = ",";
             this.SanitizeFields();
             int leaseNum = 1;
-            foreach(Lease lease in leases)
+            foreach(Lease lease in Leases)
             {
                 lease.SanitizeFields();
-                baseRow = PropertyType + delim + leases.Count + delim + leaseNum + delim + PropertyName + delim + Address + delim + lease.Suite + delim
-                    + City + delim + State + delim + ZipCode + delim + BuildingSF + delim + lease.AvailableSF
-                    + delim + SubMarket + delim + PropertySubType + delim + BuildingClass +lease.AskingRateMonthly + delim + lease.AskingRate + delim + lease.AskingRateType
-                    + delim + lease.LeaseType + delim + LoopnetID + delim + Broker.PrintBrokerData() + delim + lease.Description + delim + Url;
+                baseRow = SubMarket + delim + PropertyType + delim + PropertySubType + delim + Leases.Count + delim + leaseNum + delim + PropertyName + delim + Address + delim
+                    + City + delim + State + delim + ZipCode + delim + BuildingSF + delim + Status + delim + YearBuilt.ToString() + delim + ZoningDescription + delim + MinDivisibleSF + delim + MaxContiguousSF + delim + BuildingClass + delim
+                    + lease.Suite + delim + lease.AvailableSF + delim + lease.AskingRateMonthly + delim + lease.AskingRate + delim + lease.AskingRateType
+                    + delim + lease.LeaseType + delim + LoopnetID + delim + Broker.PrintBrokerData() + delim + lease.Description + delim + Url + delim;
+                //
+                foreach (string addtlSubType in AddtlSubTypes)
+                    baseRow += addtlSubType + " | ";
                 retRow += baseRow + delim +  Environment.NewLine;
                 leaseNum++;
 
@@ -128,6 +133,18 @@ namespace LoopNetReportingClasses
             this.Latitude = Utils.PrepareData(this.Latitude);
             this.Longitude = Utils.PrepareData(this.Longitude);
             this.StateId = Utils.PrepareData(this.StateId);
+            // public List<string> AddtlSubTypes = new List<string>();
+            //public int YearBuilt = 2099;
+            //public string ZoningDescription = "";
+            //public string MinDivisibleSF = "";
+            //public string MaxContiguousSF = "";
+            for (int i = 0; i < this.AddtlSubTypes.Count; i++)
+                AddtlSubTypes[i] = Utils.PrepareData(AddtlSubTypes[i]);
+            //YearBuilt is an int so it's cool.
+            this.ZoningDescription = Utils.PrepareData(this.ZoningDescription);
+            this.Status = Utils.PrepareData(this.Status);
+            this.MinDivisibleSF = Utils.PrepareData(this.MinDivisibleSF);
+            this.MaxContiguousSF = Utils.PrepareData(this.MaxContiguousSF);
         }
     }
     public class BrokerClass

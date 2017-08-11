@@ -117,6 +117,7 @@
     <Compile Include="ErrorRecorder.cs" />
     <Compile Include="jsonClasses_Dinosaur.cs" />
     <Compile Include="Lease.cs" />
+    <Compile Include="ListingFullJSON.cs" />
     <Compile Include="LoopNetDriver.cs" />
     <Compile Include="LoopnetDriverAlpha.cs" />
     <Compile Include="LoopNetGUI.cs">
